@@ -1,0 +1,153 @@
+# from aip import AipSpeech
+# import speech
+#
+#
+# APP_ID = '24844252'
+# API_KEY = 'kbwIlEAGwyCErpCW3hnKMQw3'
+# SECRET_KEY = 'xGEiGLDOMT2Hv9Snr3GSGMF0UcGsogkC'
+# client = AipSpeech(APP_ID,API_KEY,SECRET_KEY)
+#
+# while True:
+#     phrase = speech.input()
+#
+# result = client.synthesis(text='你好呀，我是小度')
+#
+# if not isinstance(result,dict):
+#     with
+
+# !/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Date    : 2018-12-02 19:04:55
+import wave
+import requests
+import time
+import base64
+from pyaudio import PyAudio, paInt16
+import webbrowser
+from aip import AipSpeech
+
+framerate = 16000  # 采样率
+num_samples = 2000  # 采样点
+channels = 1  # 声道
+sampwidth = 2  # 采样宽度2bytes
+FILEPATH = 'audio/speech.wav'
+
+APP_ID = '24844252'
+API_KEY = 'kbwIlEAGwyCErpCW3hnKMQw3'
+SECRET_KEY = 'xGEiGLDOMT2Hv9Snr3GSGMF0UcGsogkC'
+client = AipSpeech(APP_ID,API_KEY,SECRET_KEY)
+
+base_url = "https://openapi.baidu.com/oauth/2.0/token?grant_type=client_credentials&client_id=%s&client_secret=%s"
+
+HOST = base_url % (API_KEY, SECRET_KEY)
+
+
+def getToken(host):
+    res = requests.post(host)
+    return res.json()['access_token']
+
+
+def save_wave_file(filepath, data):
+    wf = wave.open(filepath, 'wb')
+    wf.setnchannels(channels)
+    wf.setsampwidth(sampwidth)
+    wf.setframerate(framerate)
+    wf.writeframes(b''.join(data))
+    wf.close()
+
+
+def my_record():
+    pa = PyAudio()
+    stream = pa.open(format=paInt16, channels=channels,
+                     rate=framerate, input=True, frames_per_buffer=num_samples)
+    my_buf = []
+    # count = 0
+    t = time.time()
+    print('正在录音...')
+
+    while time.time() < t + 2:  # 秒
+        string_audio_data = stream.read(num_samples)
+        my_buf.append(string_audio_data)
+    print('录音结束.')
+    save_wave_file(FILEPATH, my_buf)
+    stream.close()
+
+
+def get_audio(file):
+    with open(file, 'rb') as f:
+        data = f.read()
+    return data
+
+
+def speech2text(speech_data, token, dev_pid=1537):
+    FORMAT = 'wav'
+    RATE = '16000'
+    CHANNEL = 1
+    CUID = '24844252'
+    SPEECH = base64.b64encode(speech_data).decode('utf-8')
+
+    data = {
+        'format': FORMAT,
+        'rate': RATE,
+        'channel': CHANNEL,
+        'cuid': CUID,
+        'len': len(speech_data),
+        'speech': SPEECH,
+        'token': token,
+        'dev_pid': dev_pid
+    }
+    url = 'https://vop.baidu.com/server_api'
+    headers = {'Content-Type': 'application/json'}
+    # r=requests.post(url,data=json.dumps(data),headers=headers)
+    print('正在识别...')
+    r = requests.post(url, json=data, headers=headers)
+    Result = r.json()
+    if 'result' in Result:
+        return Result['result'][0]
+    else:
+        return Result
+
+##声音转文本
+def song2text():
+    ##捕获语音信息，4s
+    my_record()
+    # 判断语音捕获信息
+    TOKEN = getToken(HOST)
+    speech = get_audio(FILEPATH)  # 获取捕获到的语音信息
+    result = speech2text(speech, TOKEN, 1536)  # 语音转文本
+    return result
+
+# def openbrowser(text):
+#     maps = {
+#         '百度': ['百度', 'baidu'],
+#         '腾讯': ['腾讯', 'tengxun'],
+#         '网易': ['网易', 'wangyi']
+#
+#     }
+#     if text in maps['百度']:
+#         webbrowser.open_new_tab('https://www.baidu.com')
+#     elif text in maps['腾讯']:
+#         webbrowser.open_new_tab('https://www.qq.com')
+#     elif text in maps['网易']:
+#         webbrowser.open_new_tab('https://www.163.com/')
+#     else:
+#         webbrowser.open_new_tab('https://www.baidu.com/s?wd=%s' % text)
+
+
+if __name__ == '__main__':
+    flag = 'y'
+    while flag.lower() == 'y':
+        print('请输入数字选择语言：')
+        devpid = input('1536：普通话(简单英文),1537:普通话(有标点),1737:英语,1637:粤语,1837:四川话\n')
+        my_record()
+        TOKEN = getToken(HOST)
+        speech = get_audio(FILEPATH)
+        result = speech2text(speech, TOKEN, int(devpid))
+        print(result)
+        # if type(result) == str:
+        #     openbrowser(result.strip('，'))
+        # flag = input('Continue?(y/n):')
+
+        input()
+
+
