@@ -2,6 +2,8 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/robot_sound/sound_v1/DeepASR/decoder/ThreadPool" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/robot_sound/sound_v1/DeepASR/decoder/pybind11" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/robot_sound/sound_v1/DeepASR/kaldi" vcs="Git" />
   </component>
 </project>
